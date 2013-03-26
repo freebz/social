@@ -6,12 +6,12 @@ module.exports = function(config, mongoose, nodemailer){
 	password:  { type: String },
 	name: {
 	    first: { type: String },
-	    last:  { type: String}
+	    last:  { type: String }
 	},
 	birthday: {
 	    day:   { type: Number, min: 1, max: 31, required: false },
 	    month: { type: Number, min: 1, max: 12, required: false },
-	    year:  { type: number }
+	    year:  { type: Number }
 	},
 	photoUrl:  { type: String },
 	biography: { type: String }
@@ -39,8 +39,10 @@ module.exports = function(config, mongoose, nodemailer){
     var forgotPassword = function(email, resetPasswordUrl, callback){
 	var user = Account.findOne({email: email}, function findAccount(err, doc){
 	    if (err) {
+		// Email address is not a valid user
 		callback(false);
 	    } else {
+		/*
 		var smtpTransport = nodemailer.createTransport('SMTP', config.mail);
 		resetPasswordUrl += '?account=' + doc._id;
 		smtpTransport.sendMail({
@@ -55,6 +57,9 @@ module.exports = function(config, mongoose, nodemailer){
 			callback(true);
 		    }
 		});
+		*/
+		// 메일 보내기는 패스
+		callback(true);
 	    }
 	});
     };
@@ -86,7 +91,7 @@ module.exports = function(config, mongoose, nodemailer){
 
     return {
 	register: register,
-	forgetPassword: forgetPassword,
+	forgotPassword: forgotPassword,
 	changePassword: changePassword,
 	login: login,
 	Account: Account
