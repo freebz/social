@@ -1,5 +1,7 @@
-define(['text!template/forgotpassword.html'], function(forgotpasswordTemplate) {
+define(['SocialNetView', 'text!templates/forgotpassword.html'], function(SocialNetView, forgotpasswordTemplate) {
     var forgotpasswordView = Backbone.View.extend({
+	requireLogin: false,
+	
 	el: $('#content'),
 
 	events: {

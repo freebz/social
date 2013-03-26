@@ -1,11 +1,13 @@
-define(['text!templates/register.html'], function(registerTemplate){
-    var registerView = Backbone.View.extend({
+define(['SocialNetView', 'text!templates/register.html'], function(SocialNetView, registerTemplate){
+    var registerView = SocialNetView.extend({
+	requireLogin: false,
+	
 	el: $('#content'),
 	
 	events: {
 	    "submit form": "register"
 	},
-
+	
 	register: function() {
 	    $.post('/register', {
 		firstName: $('input[name=firstName]').val(),

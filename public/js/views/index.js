@@ -42,5 +42,5 @@ function(SocialNetView, indexTemplate, StatusView, Status){
 	}
     });
 
-    return new indexView;
+    return indexView;
 });

@@ -13,7 +13,7 @@ function(IndexView, RegisterView, LoginView, ForgetPasswordView, ProfileView,
 	    "index": "index",
 	    "login": "login",
 	    "register": "register",
-	    "forgotpassword": "forgotpassword"
+	    "forgotpassword": "forgotpassword",
 	    "profile/:id": "profile"
 	},
 	

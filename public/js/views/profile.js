@@ -5,7 +5,7 @@ function(SocialNetView, profileTemplate,
 	 statusTemplate, Status, StatusView)
 {
     var profileView = SocialNetView.extend({
-	el; $('#content'),
+	el: $('#content'),
 
 	initialize: function() {
 	    this.model.bind('change', this.render, this);

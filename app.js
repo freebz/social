@@ -16,12 +16,9 @@ var dbPath = 'mongodb://localhost/nodebackbone';
 
 // Import the data layer
 var mongoose = require('mongoose');
-/*
 var config = {
     mail: require('./config/mail')
 };
-*/
-var config = null;
 
 // Import the models
 var models = {
