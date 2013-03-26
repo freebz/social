@@ -52,7 +52,6 @@ module.exports = function(config, mongoose, nodemailer){
 		// Email address is not a valid user
 		callback(false);
 	    } else {
-		/*
 		var smtpTransport = nodemailer.createTransport('SMTP', config.mail);
 		resetPasswordUrl += '?account=' + doc._id;
 		smtpTransport.sendMail({
@@ -67,9 +66,6 @@ module.exports = function(config, mongoose, nodemailer){
 			callback(true);
 		    }
 		});
-		*/
-		// 메일 보내기는 패스
-		callback(true);
 	    }
 	});
     };
