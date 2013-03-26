@@ -74,7 +74,7 @@ module.exports = function(config, mongoose, nodemailer){
 	var shaSum = crypto.createHash('sha256');
 	shaSum.update(password);
 	Account.findOne({email:email, password:shaSum.digest('hex')}, function(err, doc){
-	    callback(null!=doc);
+	    callback(doc);
 	});
     };
 
@@ -83,6 +83,16 @@ module.exports = function(config, mongoose, nodemailer){
 	    callback(doc);
 	});
     }
+
+    var findByString = function(searchStr, callback) {
+	var searchRegex = new RegExp(searchStr, 'i');
+	Account.find({
+	    $or: [
+		{ 'name.full': { $regex: searchRegex } },
+		{ email:       { $regex: searchRegex } }
+	    ]
+	}, callback);
+    };
 
     var register = function(email, password, firstName, lastName){
 	var shaSum = crypto.createHash('sha256');
@@ -100,6 +110,33 @@ module.exports = function(config, mongoose, nodemailer){
 	user.save(registerCallback);
 	console.log('Save command was sent');
     }
+
+    var addContact = function(account, addcontact) {
+	contact = {
+	    name: addcontact.name,
+	    accountId: addcontact._id,
+	    added: new Date(),
+	    updated: new Date()
+	};
+	account.contacts.push(contact);
+
+	account.save(function (err) {
+	    if (err) {
+		console.log('Error saving account: ' + err);
+	    }
+	});
+    };
+
+    var removeContact = function(account, contactId) {
+	if ( null == account.contacts ) return;
+
+	account.contacts.forEach(function(contact) {
+	    if ( contact.accountId == contactId ) {
+		account.contacts.remove(contact);
+	    }
+	}):
+	account.save();
+    };
 
     return {
 	findById: findById,

@@ -67,19 +67,19 @@ app.post('/login', function(req, res){
 	return;
     }
 
-    models.Account.login(email, password, function(success) {
-	if( !success ) {
+    models.Account.login(email, password, function(account) {
+	if( !account ) {
 	    res.send(401);
 	    return;
 	}
 	console.log('login was successful');
-	erq.session.loggedIn = true;
+	req.session.loggedIn = true;
 	req.session.accountId = account._id;
 	res.send(200);
     });
 });
 
-app.post('register', function(req, res){
+app.post('/register', function(req, res){
     var firstName = req.param('firstName', '');
     var lastName = req.param('lastName', '');
     var email = req.param('email', null);
@@ -143,6 +143,64 @@ app.post('/accounts/:id/status', function(req, res) {
     res.send(200);
 });
 
+app.get('/accounts/:id/contacts', function(req, res) {
+    var accountId = req.params.id == 'me'
+	? req.session.accountId
+	: req.params.id;
+    models.Account.findById(accountId, function(account) {
+	res.send(account.contacts);
+    });
+});
+
+app.post('/accounts/:id/contact', function(req, rs) {
+    var accountId = req.params.id == 'me'
+	? req.session.accountId
+	: req.params.id;
+    var contactId = req.param('contactId', null);
+
+    if ( null == contactId ) {
+	res.send(400);
+	return;
+    }
+
+    models.Account.findById(accountId, function(account) {
+	if ( account ) {
+	    models.Account.findById(contactId, function(contact) {
+		models.Account.addContact(account, contact);
+
+		models.Account.addContact(contact, account);
+		account.save();
+	    });
+	}
+    });
+
+    res.send(200);
+});
+
+app.delete('/accounts/:id/contact', function(req, res) {
+    var accountId = req.params.id == 'me'
+	? req.session.accountId
+	: req.params.id;
+    var contactId = req.param('contactId', null);
+
+    if ( null == contactId ) {
+	res.send(400);
+	return;
+    }
+
+    models.Account.findById(accountId, function(account) {
+	if ( !account ) return;
+	models.Account.findById(contactId, function(contact, err) {
+	    if ( !contact ) return;
+
+	    models.Account.removeContact(account, contactId);
+	    models.Account.removeContact(contact, accountId);
+	});
+    });
+
+    res.send(200);
+});
+
 app.get('/accounts/:id', function(req, res){
     var accountId = req.params.id == 'me'
 	? req.session.accountId
@@ -183,6 +241,22 @@ app.post('/resetPassword', function(req, res){
 	Account.changePassword(accountId, password);
     }
     res.render('resetPasswordSuccess.jade');
+});
+
+app.post('/contacts/find', function(req, res) {
+    var searchStr = req.param('searchStr', null);
+    if ( null == searchStr ) {
+	res.send(400);
+	return;
+    }
+
+    models.Account.findByString(searchStr, function onSearchDone(err, accounts) {
+	if (err || accounts.length == 0) {
+	    res.send(404);
+	} else {
+	    res.send(accounts);
+	}
+    });
 });
 
 http.createServer(app).listen(app.get('port'), function(){
