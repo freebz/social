@@ -16,6 +16,9 @@ var dbPath = 'mongodb://localhost/nodebackbone';
 
 // Import the data layer
 var mongoose = require('mongoose');
+//var ObjectId = require('mongodb').ObjectID;
+//var ObjectId = mongoose.Types.ObjectId;
+
 var config = {
     mail: require('./config/mail')
 };
@@ -102,6 +105,15 @@ app.get('/account/authenticated', function(req, res){
     }
 });
 
+app.get('/account/:id/contacts', function(req, res) {
+    var accountId = req.params.id == 'me'
+	? req.session.accountId
+	: req.params.id;
+    models.Account.findById(accountId, function(account) {
+	res.send(account.contacts);
+    });
+});
+
 //Getting the activity list
 app.get('/accounts/:id/activity', function(req, res) {
     var accontId = req.params.id == 'me'
@@ -126,6 +138,10 @@ app.post('/accounts/:id/status', function(req, res) {
 	? req.session.accountId
 	: req.params.id;
     models.Account.findById(accountId, function(account) {
+
+	console.log(account);
+	console.log(account.name);
+
 	status = {
 	    name: account.name,
 	    status: req.param('stauts', '')
@@ -205,7 +221,11 @@ app.get('/accounts/:id', function(req, res){
     var accountId = req.params.id == 'me'
 	? req.session.accountId
 	: req.params.id;
-    Account.findOne({_id:accountId}, function(account){
+    models.Account.findById(accountId, function(account){
+	if ( accountId == 'me'
+	     || models.Account.hasContact(account, req.session.accountId) ) {
+	    account.isFriend = true;
+	}
 	res.send(account);
     });
 });
