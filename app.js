@@ -4,13 +4,14 @@
  */
 
 var express = require('express')
-  , routes = require('./routes')
-  , user = require('./routes/user')
+//  , routes = require('./routes')
+//  , user = require('./routes/user')
   , http = require('http')
   , path = require('path');
 
 var nodemailer = require('nodemailer');
 var MemoryStore = require('connect').session.MemoryStore;
+var fs = require('fs');
 
 var app = express();
 var dbPath = 'mongodb://localhost/nodebackbone';
@@ -39,7 +40,8 @@ app.configure(function(){
   app.use(express.cookieParser());
   app.use(express.session({
     secret: "SocialNet secret key",
-    store: new MemoryStore()
+    key:'express.sid',
+    store: app.sessionStore
   }));
   app.use(express.methodOverride());
   app.use(app.router);
@@ -53,200 +55,16 @@ app.configure('development', function(){
   app.use(express.errorHandler());
 });
 
+
+// Improt the routes
+fs.readdirSync('routes').forEach(function(file) {
+    if ( file[0] == '.' ) return;
+    var routeName = file.substr(0, file.indexOf('.'));
+    require('./routes/' + routeName)(app, models);
+});
+
 app.get('/', function(req, res){
     res.render("index.jade");
-});
-
-app.post('/login', function(req, res){
-    console.log('login request');
-    var email = req.param('email', null);
-    var password = req.param('password', null);
-
-    if ( null == email || email.length < 1
-	 || null == password || password.length < 1) {
-	res.send(400);
-	return;
-    }
-
-    models.Account.login(email, password, function(account) {
-	if( !account ) {
-	    res.send(401);
-	    return;
-	}
-	console.log('login was successful');
-	req.session.loggedIn = true;
-	req.session.accountId = account._id;
-	res.send(200);
-    });
-});
-
-app.post('/register', function(req, res){
-    var firstName = req.param('firstName', '');
-    var lastName = req.param('lastName', '');
-    var email = req.param('email', null);
-    var password = req.param('password', null);
-
-    if ( null == email || null == password ) {
-	res.send(400);
-	return;
-    }
-
-    models.Account.register(email, password, firstName, lastName);
-    res.send(200);
-});
-
-app.get('/account/authenticated', function(req, res){
-    if ( req.session.loggedIn ){
-	res.send(200);
-    } else {
-	res.send(401);
-    }
-});
-
-app.get('/accounts/:id/contacts', function(req, res) {
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    models.Account.findById(accountId, function(account) {
-	res.send(account.contacts);
-    });
-});
-
-//Getting the activity list
-app.get('/accounts/:id/activity', function(req, res) {
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    models.Account.findById(accountId, function(account) {
-	res.send(account.activity);
-    });
-});
-
-app.get('/accounts/:id/status', function(req, res){
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    models.Account.findById(accountId, function(account) {
-	res.send(account.status);
-    });
-});
-
-app.post('/accounts/:id/status', function(req, res) {
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    models.Account.findById(accountId, function(account) {
-	status = {
-	    name: account.name,
-	    status: req.param('status', '')
-	};
-	account.status.push(status);
-
-	// Push ther status to all friends
-	account.activity.push(status);
-	account.save(function (err) {
-	    if (err) {
-		console.log('Error saving account: ' + err);
-	    }
-	});
-    });
-    res.send(200);
-});
-
-app.delete('/accounts/:id/contact', function(req, res) {
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    var contactId = req.param('contactId', null);
-
-    if ( null == contactId ) {
-	res.send(400);
-	return;
-    }
-
-    models.Account.findById(accountId, function(account) {
-	if ( !account ) return;
-	models.Account.findById(contactId, function(contact, err) {
-	    if ( !contact ) return;
-
-	    models.Account.removeContact(account, contactId);
-	    models.Account.removeContact(contact, accountId);
-	});
-    });
-
-    res.send(200);
-});
-
-
-app.post('/accounts/:id/contact', function(req, res) {
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    var contactId = req.param('contactId', null);
-
-    if ( null == contactId ) {
-	res.send(400);
-	return;
-    }
-
-    models.Account.findById(accountId, function(account) {
-	if ( account ) {
-	    models.Account.findById(contactId, function(contact) {
-		models.Account.addContact(account, contact);
-
-		models.Account.addContact(contact, account);
-		account.save();
-	    });
-	}
-    });
-
-    res.send(200);
-});
-
-app.get('/accounts/:id', function(req, res){
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    models.Account.findById(accountId, function(account){
-	if ( accountId == 'me'
-	     || models.Account.hasContact(account, req.session.accountId) ) {
-	    account.isFriend = true;
-	}
-	res.send(account);
-    });
-});
-
-app.post('/forgotpassword', function(req, res){
-    var hostname = req.headers.host;
-    var resetPasswordUrl = 'http://' + hostname + '/resetPassword';
-    var email = req.param('email', null);
-    if ( null == email || email.length < 1) {
-	res.send(400);
-	return;
-    }
-    
-    Account.forgotPassword(email, resetPasswordUrl, function(success){
-	if (success) {
-	    res.send(200);
-	} else {
-	    // Username or password not found
-	    res.send(404);
-	}
-    });
-});
-
-app.get('/resetPassword', function(req, res){
-    var accountId = req.param('account', null);
-    res.render('resetPassword.jade', {locals:{accountId:accountId}});
-});
-
-app.post('/resetPassword', function(req, res){
-    var accountId = req.param('accountId', null);
-    var password = req.param('password', null);
-    if ( null != accountId && null != password ) {
-	Account.changePassword(accountId, password);
-    }
-    res.render('resetPasswordSuccess.jade');
 });
 
 app.post('/contacts/find', function(req, res) {
@@ -264,6 +82,7 @@ app.post('/contacts/find', function(req, res) {
 	}
     });
 });
+
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
