@@ -1,6 +1,6 @@
 
 /**
- * Module dependencies.
+ * module dependencies.
  */
 
 var express = require('express')
@@ -9,9 +9,10 @@ var express = require('express')
   , http = require('http')
   , path = require('path');
 
-var app = express();
 var nodemailer = require('nodemailer');
 var MemoryStore = require('connect').session.MemoryStore;
+
+var app = express();
 var dbPath = 'mongodb://localhost/nodebackbone';
 
 // Import the data layer
@@ -51,9 +52,6 @@ app.configure(function(){
 app.configure('development', function(){
   app.use(express.errorHandler());
 });
-
-//app.get('/', routes.index);
-//app.get('/users', user.list);
 
 app.get('/', function(req, res){
     res.render("index.jade");
@@ -116,7 +114,7 @@ app.get('/account/:id/contacts', function(req, res) {
 
 //Getting the activity list
 app.get('/accounts/:id/activity', function(req, res) {
-    var accontId = req.params.id == 'me'
+    var accountId = req.params.id == 'me'
 	? req.session.accountId
 	: req.params.id;
     models.Account.findById(accountId, function(account) {
@@ -138,13 +136,9 @@ app.post('/accounts/:id/status', function(req, res) {
 	? req.session.accountId
 	: req.params.id;
     models.Account.findById(accountId, function(account) {
-
-	console.log(account);
-	console.log(account.name);
-
 	status = {
 	    name: account.name,
-	    status: req.param('stauts', '')
+	    status: req.param('status', '')
 	};
 	account.status.push(status);
 
