@@ -5,7 +5,7 @@ function(SocialNetView, contactTemplate) {
 
 	removeButton: false,
 
-	tagNamt: 'li',
+	tagName: 'li',
 
 	events: {
 	    "click .addbutton": "addContact",
@@ -51,6 +51,7 @@ function(SocialNetView, contactTemplate) {
 	},
 
 	render: function() {
+	    console.log(this.model);
 	    $(this.el).html(_.template(contactTemplate, {
 		model: this.model.toJSON(),
 		addButton: this.addButton,

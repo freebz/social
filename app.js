@@ -103,7 +103,7 @@ app.get('/account/authenticated', function(req, res){
     }
 });
 
-app.get('/account/:id/contacts', function(req, res) {
+app.get('/accounts/:id/contacts', function(req, res) {
     var accountId = req.params.id == 'me'
 	? req.session.accountId
 	: req.params.id;
@@ -153,40 +153,6 @@ app.post('/accounts/:id/status', function(req, res) {
     res.send(200);
 });
 
-app.get('/accounts/:id/contacts', function(req, res) {
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    models.Account.findById(accountId, function(account) {
-	res.send(account.contacts);
-    });
-});
-
-app.post('/accounts/:id/contact', function(req, rs) {
-    var accountId = req.params.id == 'me'
-	? req.session.accountId
-	: req.params.id;
-    var contactId = req.param('contactId', null);
-
-    if ( null == contactId ) {
-	res.send(400);
-	return;
-    }
-
-    models.Account.findById(accountId, function(account) {
-	if ( account ) {
-	    models.Account.findById(contactId, function(contact) {
-		models.Account.addContact(account, contact);
-
-		models.Account.addContact(contact, account);
-		account.save();
-	    });
-	}
-    });
-
-    res.send(200);
-});
-
 app.delete('/accounts/:id/contact', function(req, res) {
     var accountId = req.params.id == 'me'
 	? req.session.accountId
@@ -206,6 +172,32 @@ app.delete('/accounts/:id/contact', function(req, res) {
 	    models.Account.removeContact(account, contactId);
 	    models.Account.removeContact(contact, accountId);
 	});
+    });
+
+    res.send(200);
+});
+
+
+app.post('/accounts/:id/contact', function(req, res) {
+    var accountId = req.params.id == 'me'
+	? req.session.accountId
+	: req.params.id;
+    var contactId = req.param('contactId', null);
+
+    if ( null == contactId ) {
+	res.send(400);
+	return;
+    }
+
+    models.Account.findById(accountId, function(account) {
+	if ( account ) {
+	    models.Account.findById(contactId, function(contact) {
+		models.Account.addContact(account, contact);
+
+		models.Account.addContact(contact, account);
+		account.save();
+	    });
+	}
     });
 
     res.send(200);
